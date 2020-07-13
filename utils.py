@@ -51,16 +51,17 @@ def get_outputs_names(net):
 # Draw the predicted bounding box
 def draw_predict(frame, conf, left, top, right, bottom):
     # Draw a bounding box.
-    cv2.rectangle(frame, (left, top), (right, bottom), COLOR_YELLOW, 2)
+    # cv2.rectangle(frame, (left, top), (right, bottom), COLOR_YELLOW, 2)
 
-    text = '{:.2f}'.format(conf)
+    # text = '{:.2f}'.format(conf)
 
-    # Display the label at the top of the bounding box
-    label_size, base_line = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+    # # Display the label at the top of the bounding box
+    # label_size, base_line = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
-    top = max(top, label_size[1])
-    cv2.putText(frame, text, (left, top - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
-                COLOR_WHITE, 1)
+    # top = max(top, label_size[1])
+    # cv2.putText(frame, text, (left, top - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+    #             COLOR_WHITE, 1)
+    return frame[top:bottom,left:right]
 
 
 def post_process(frame, outs, conf_threshold, nms_threshold):
@@ -93,6 +94,7 @@ def post_process(frame, outs, conf_threshold, nms_threshold):
     indices = cv2.dnn.NMSBoxes(boxes, confidences, conf_threshold,
                                nms_threshold)
 
+    all_faces = []
     for i in indices:
         i = i[0]
         box = boxes[i]
@@ -104,8 +106,10 @@ def post_process(frame, outs, conf_threshold, nms_threshold):
         left, top, right, bottom = refined_box(left, top, width, height)
         # draw_predict(frame, confidences[i], left, top, left + width,
         #              top + height)
-        draw_predict(frame, confidences[i], left, top, right, bottom)
-    return final_boxes
+        f = draw_predict(frame, confidences[i], left, top, right, bottom)
+        f = cv2.resize(f, (224, 224),  interpolation = cv2.INTER_LINEAR)
+        all_faces.append((f,confidences[i]))
+    return all_faces
 
 
 class FPS:
@@ -143,7 +147,7 @@ def refined_box(left, top, width, height):
 
     original_vert_height = bottom - top
     top = int(top + original_vert_height * 0.15)
-    bottom = int(bottom - original_vert_height * 0.05)
+    bottom = int(bottom - original_vert_height * 0.005)
 
     margin = ((bottom - top) - (right - left)) // 2
     left = left - margin if (bottom - top - right + left) % 2 == 0 else left - margin - 1
@@ -151,3 +155,7 @@ def refined_box(left, top, width, height):
     right = right + margin
 
     return left, top, right, bottom
+
+def get_no(c,i):
+    s = str(c//2)
+    return s+'_'+str(i)
