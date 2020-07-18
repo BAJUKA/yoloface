@@ -65,9 +65,15 @@ net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
 
-def _main():
+def _main(out_folder,vid_path, out_path):
     # wind_name = 'face detection using YOLOv3'
     #cv2.namedWindow(wind_name, cv2.WINDOW_NORMAL)
+
+    if not os.path.exists(out_path+out_folder):
+        print('==> Creating the {} directory...'.format(out_path+out_folder))
+        os.makedirs(out_folder)
+    else:
+        print('==> Skipping create the {} directory...'.format(out_path+out_folder))
 
     output_file = ''
 
@@ -78,10 +84,10 @@ def _main():
         cap = cv2.VideoCapture(args.image)
         output_file = args.image[:-4].rsplit('/')[-1] + '_yoloface.jpg'
     elif args.video:
-        if not os.path.isfile(args.video):
-            print("[!] ==> Input video file {} doesn't exist".format(args.video))
+        if not os.path.isfile(vid_path+out_folder+'.mkv'):
+            print("[!] ==> Input video file {} doesn't exist".format(vid_path+out_folder+'.mkv'))
             sys.exit(1)
-        cap = cv2.VideoCapture(args.video) # Frame rate is approximately 40 FPS
+        cap = cv2.VideoCapture(vid_path+out_folder+'.mkv') # Frame rate is approximately 40 FPS
         output_file = args.video[:-4].rsplit('/')[-1] + '_yoloface.avi'
     else:
         # Get data from the camera
@@ -121,8 +127,8 @@ def _main():
 
         # Remove the bounding boxes with low confidence
         faces = post_process(frame, outs, CONF_THRESHOLD, NMS_THRESHOLD)
-        print('[i] ==> # detected faces: {}'.format(len(faces)))
-        print('#' * 60)
+        #print('[i] ==> # detected faces: {}'.format(len(faces)))
+        #print('#' * 60)
 
         # initialize the set of information we'll displaying on the frame
         # info = [
@@ -143,13 +149,13 @@ def _main():
                 j+=1
                 if score>0.7:
                     print("Confidence",score)
-                    cv2.imwrite(os.path.join(args.output_dir, "{}.png".format(name)), face.astype(np.uint8))
+                    cv2.imwrite(os.path.join(out_path+out_folder+'/', "{}.png".format(name)), face.astype(np.uint8))
                 else:
-                    cv2.imwrite(os.path.join(args.output_dir, "{}.png".format(name)), frame.astype(np.uint8))
+                    cv2.imwrite(os.path.join(out_path+out_folder+'/', "{}.png".format(name)), frame.astype(np.uint8))
 
         else:
             name = get_no(c,0)
-            cv2.imwrite(os.path.join(args.output_dir, "{}.png".format(name)), frame.astype(np.uint8))
+            cv2.imwrite(os.path.join(out_path+out_folder+'/', "{}.png".format(name)), frame.astype(np.uint8))
         c+=1
         # if args.image:
         #     cv2.imwrite(os.path.join(args.output_dir, output_file), frame.astype(np.uint8))
@@ -171,4 +177,12 @@ def _main():
 
 
 if __name__ == '__main__':
-    _main()
+    files = ['on-list','off-list','mixed-list']
+    vid_path = 'path'
+    out_path = 'path'
+    for file in files:
+        with open('path','r') as f:
+            data = f.readlines()
+            for d in data:
+                d = d.strip()
+                _main(d,vid_path,out_path)
